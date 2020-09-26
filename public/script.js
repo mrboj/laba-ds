@@ -23,30 +23,49 @@ function calculate() {
         .map(arg => beautify(arg))
         .map(arg => new Big(arg))
 
-    return operationInput.value === '+'
-        ? sum(a, b)
-        : diff(a, b);
+    switch (operationInput.value) {
+        case '+': return sum(a, b);
+        case '-': return diff(a, b);
+        case '*': return mul(a, b);
+        case '/': return div(a, b);
+    }
 }
 
 function setResult(result) {
-    document.getElementById('result').innerText = result;
+    document.getElementById('result').innerText = out(result);
 }
 
 function beautify(val) {
     validate(val);
-    return val.replace(',', '.');
+    return val
+        .replace(',', '.')
+        .replace(/\s/g, '');
 }
 
 function validate(val) {
-    if (val.includes('e')) {
+    if (val.includes('e') || !/^(((\d{1,3})( \d{3})*)|(\d*))(\.\d*)?$/.test(val)) {
         throw new Error('Invalid Data');
     }
 }
 
 function sum(x, y) {
-    return x.plus(y).toPrecision();
+    return x.plus(y).round(6).toPrecision();
 }
 
 function diff(x, y) {
-    return x.minus(y).toPrecision();
+    return x.minus(y).round(6).toPrecision();
+}
+
+function mul(x, y) {
+    return x.mul(y).round(6).toPrecision();
+}
+
+function div(x, y) {
+    return x.div(y).round(6).toPrecision();
+}
+
+function out(val) {
+    const parts = val.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return parts.join('.');
 }
