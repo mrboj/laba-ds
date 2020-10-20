@@ -1,6 +1,4 @@
 const form = document.forms['calculator'];
-const firstArgInput = form.elements['first-arg'];
-const secondArgInput = form.elements['second-arg'];
 
 form.addEventListener('submit', onSubmit);
 
@@ -10,25 +8,34 @@ function onSubmit(event) {
     setResult('');
 
     try {
-        setResult(calculate());
+        setResult(calculateAll());
     } catch (error) {
         alert(`Error!\n${error}`);
     }
 }
 
-function calculate() {
-    const operationInput = document.querySelector('input[name="operation"]:checked');
-    const [ a, b ] = [ firstArgInput, secondArgInput ]
-        .map(input => input.value)
-        .map(arg => beautify(arg))
-        .map(arg => new Big(arg))
+function calculateAll() {
+    const [ operation1, operation2, operation3 ] = getOperations();
+    const [ a, b, c, d ] = getArguments();
 
-    switch (operationInput.value) {
-        case '+': return sum(a, b);
-        case '-': return diff(a, b);
-        case '*': return mul(a, b);
-        case '/': return div(a, b);
-    }
+    const bc = calculate(operation2, b, c);
+
+    return (operation1 === '+' || operation1 === '-') && (operation3 === '*' || operation3 === '/')
+        ? calculate(operation1, a, calculate(operation3, bc, d))
+        : calculate(operation3, calculate(operation1, a, bc), d)
+}
+
+function getOperations() {
+    return [ ...new Array(3) ]
+        .map((item, index) => `input[name="operation${ index + 1 }"]:checked`)
+        .map(selector => document.querySelector(selector).value);
+}
+
+function getArguments() {
+    return [ ...new Array(4) ]
+        .map((item, index) => `arg${ index + 1 }`)
+        .map(name => form.elements[ name ].value)
+        .map(arg => beautify(arg));
 }
 
 function setResult(result) {
@@ -43,8 +50,20 @@ function beautify(val) {
 }
 
 function validate(val) {
-    if (val.includes('e') || !/^(((\d{1,3})( \d{3})*)|(\d*))(\.\d*)?$/.test(val)) {
+    if (val.includes('e') || !/^-?(((\d{1,3})( \d{3})*)|(\d*))((\.|(,))\d*)?$/.test(val)) {
         throw new Error('Invalid Data');
+    }
+}
+
+function calculate(operation, arg1, arg2) {
+    const a = new Big(arg1);
+    const b = new Big(arg2);
+
+    switch (operation) {
+        case '+': return sum(a, b);
+        case '-': return diff(a, b);
+        case '*': return mul(a, b);
+        case '/': return div(a, b);
     }
 }
 
